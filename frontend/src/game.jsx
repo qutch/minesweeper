@@ -22,7 +22,6 @@ class GameTile {
 }
 
 // GRID SETUP
-
 function generateGrid() {
     let GRID_HEIGHT = 10;
     let GRID_WIDTH = 10;
@@ -52,11 +51,8 @@ function generateNewTiles() {
     return generateGrid();
 }
 
-// Generate initial grid
-let GAME_TILES = generateGrid();
-
 // TILE COMPONENT
-function Tile({TileInstance, sendPlayingStatus}) {
+function Tile({TileInstance, sendPlayingStatus, isPlaying}) {
     // Sets condition css class
     const [currentState, setState] = useState("neutral")
 
@@ -76,10 +72,11 @@ function Tile({TileInstance, sendPlayingStatus}) {
     }
 
     return (
-        <button class={currentState} onClick={handleClick}></button>
+        <button class={currentState} onClick={handleClick} disabled={!isPlaying}></button>
     )
 }
 
+// LOSE SCREEN
 function LoseScreen({sendResetState}) {
 
     function handleClick() {
@@ -94,6 +91,7 @@ function LoseScreen({sendResetState}) {
     )
 }
 
+// START SCREEN
 function StartScreen({sendStartState}) {
     function handleClick() {
         sendStartState(true)
@@ -106,38 +104,58 @@ function StartScreen({sendStartState}) {
     )
 }
 
-// GRID COMPONENT
-export function GameGrid() {
-    const [tiles, setTiles] = useState(GAME_TILES);
-    const [isPlaying, setIsPlaying] = useState(true);
-    const [hasStarted, setHasStarted] = useState(false);
-
-    function handleReset(data) {
-        setIsPlaying(data);
-        setTiles(generateNewTiles());
-    }
-
-    function handleStart(data) {
-        setHasStarted(data);
-    }
+// GAME GRID
+function Grid({sendEndState, TILES, gameID, isPlaying}) {
 
     function handleMineExplosion(data) {
-        setIsPlaying(data);
+        sendEndState(false);
     }
 
     return (
         <div className="gameBoard">
-            {!hasStarted && <StartScreen sendStartState={handleStart}/>}
             {
-                hasStarted &&
-                tiles.map((row, rowIdx) => (
+                TILES.map((row, rowIdx) => (
                     row.map((tile, tileIdx) => {
                         return(
-                            <Tile TileInstance={tile} sendPlayingStatus={handleMineExplosion}/>
+                            <Tile TileInstance={tile} sendPlayingStatus={handleMineExplosion} isPlaying={isPlaying}/>
                         )
                     })
                 ))
             }
+        </div>
+    )
+}
+
+
+
+// GAME COMPONENT
+export function Game() {
+    const [isPlaying, setIsPlaying] = useState(true);
+    const [hasStarted, setHasStarted] = useState(false);
+    const [tiles, setTiles] = useState([]);
+    const [gameID, setGameID] = useState(0);
+
+    function handleLose(data) {
+        setIsPlaying(data);
+    }
+
+    function handleReset(data) {
+        setIsPlaying(data);
+        setTiles(generateNewTiles());
+        setGameID(prev => prev + 1);
+    }
+
+    function handleStart(data) {
+        setTiles(generateNewTiles());
+        setHasStarted(data);
+        setGameID(prev => prev + 1);
+    }
+
+
+    return (
+        <div>
+            {!hasStarted && <StartScreen sendStartState={handleStart}/>}
+            {hasStarted && <Grid key={gameID} sendEndState={handleLose} TILES={tiles} isPlaying={isPlaying}/>}
             {!isPlaying && <LoseScreen sendResetState={handleReset}/>}
         </div>
     )
