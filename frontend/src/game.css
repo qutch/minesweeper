@@ -24,7 +24,13 @@
 
 .gameBoard {
     display: grid;
+    position: absolute;
+    z-index: 0;
     grid-template-columns: repeat(10, 50px);
     grid-template-rows: repeat(10, 50px);
+}
+
+.overlay-container {
+    position: relative;
 }
 
